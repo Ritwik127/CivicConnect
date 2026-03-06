@@ -104,16 +104,22 @@ const ReportIssueContent = () => {
           <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-blue-400 font-bold border border-blue-500/20 text-left">
             <PlusCircle className="w-5 h-5" /> Report Issue
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all text-left">
+          <button
+           onClick={() => navigate('/my-reports')}
+           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all text-left">
             <FileText className="w-5 h-5" /> My Reports
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all text-left">
+          <button
+          onClick={() => navigate('/notifications')}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all text-left">
             <Bell className="w-5 h-5" /> Notifications
           </button>
         </nav>
 
         <div className="p-4 border-t border-slate-800 space-y-1">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-slate-400 hover:bg-slate-800/50 transition-all text-left">
+          <button
+          onClick={() => navigate('/settings')}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-slate-400 hover:bg-slate-800/50 transition-all text-left">
             <Settings className="w-5 h-5" /> Settings
           </button>
           <button 
@@ -141,7 +147,9 @@ const ReportIssueContent = () => {
           </div>
           
           <div className="flex items-center gap-6">
-            <button className="p-2.5 !bg-slate-800/50 text-slate-400 hover:text-white rounded-xl border border-slate-700 relative">
+            <button
+            onClick={() => navigate('/notifications')}
+            className="p-2.5 !bg-slate-800/50 text-slate-400 hover:text-white rounded-xl border border-slate-700 relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-[#0f172a]"></span>
             </button>

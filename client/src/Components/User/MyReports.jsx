@@ -1,0 +1,241 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  PlusCircle, 
+  MapPin, 
+  Calendar, 
+  ChevronRight, 
+  Filter, 
+  AlertTriangle, 
+  Camera, 
+  AlertCircle,
+  LayoutDashboard,
+  FileText,
+  Bell,
+  Settings,
+  LogOut,
+  ArrowLeft
+} from 'lucide-react';
+
+// --- MOCK DATA & UTILS ---
+const MOCK_REPORTS = [
+  { id: 'R-8429', category: 'Pothole', location: 'Oxford Street, Downtown', status: 'IN-PROGRESS', date: 'Oct 24, 2026' },
+  { id: 'R-8425', category: 'Garbage', location: 'Park Avenue, Near Gate 3', status: 'OPEN', date: 'Oct 23, 2026' },
+  { id: 'R-8412', category: 'Streetlight', location: 'Baker St, Block C', status: 'RESOLVED', date: 'Oct 20, 2026' },
+];
+
+const CATEGORY_ICONS = {
+  'Pothole': { icon: AlertTriangle, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+  'Garbage': { icon: Camera, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  'Streetlight': { icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+};
+
+const StatusBadge = ({ status }) => {
+  const styles = {
+    'RESOLVED': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    'IN-PROGRESS': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    'OPEN': 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+  };
+  return (
+    <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest border opacity-90 ${styles[status] || styles['OPEN']}`}>
+      {status}
+    </span>
+  );
+};
+
+// --- COMPONENT ---
+const MyReports = () => {
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState('ALL');
+  const [userName] = useState("John Doe");
+
+  const filteredReports = MOCK_REPORTS.filter(r => filter === 'ALL' || r.status === filter);
+
+  return (
+    <div className="flex h-screen w-screen bg-[#0b1120] text-white font-sans overflow-hidden">
+      
+      {/* Sidebar */}
+      <aside className="hidden lg:flex flex-col w-64 bg-[#0f172a] border-r border-slate-800 h-full shrink-0">
+        <div className="p-6 flex items-center gap-3 mb-6">
+          <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-600/20">
+            <span className="font-bold text-xl">C</span>
+          </div>
+          <span className="font-bold text-xl tracking-tight text-blue-500">CivicConnect</span>
+        </div>
+
+        <nav className="flex-1 px-4 space-y-1">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all text-left"
+          >
+            <LayoutDashboard className="w-5 h-5" /> Dashboard
+          </button>
+          <button 
+            onClick={() => navigate('/report-issue')}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all text-left"
+          >
+            <PlusCircle className="w-5 h-5" /> Report Issue
+          </button>
+          <button 
+            onClick={() => navigate('/my-reports')}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-blue-400 font-bold border border-blue-500/20 text-left"
+          >
+            <FileText className="w-5 h-5" /> My Reports
+          </button>
+          <button
+          onClick={() => navigate('/notifications')}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all text-left">
+            <Bell className="w-5 h-5" /> Notifications
+          </button>
+        </nav>
+
+        <div className="p-4 border-t border-slate-800 space-y-1">
+          <button
+          onClick={() => navigate('/settings')}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-slate-400 hover:bg-slate-800/50 transition-all text-left">
+            <Settings className="w-5 h-5" /> Settings
+          </button>
+          <button 
+            onClick={() => navigate('/login')}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl !bg-blue-600/10 text-rose-500 hover:bg-rose-500/10 transition-all text-left"
+          >
+            <LogOut className="w-5 h-5" /> Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Area */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        
+        {/* Header */}
+        <header className="h-20 bg-[#0f172a] border-b border-slate-800 px-8 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="lg:hidden p-2.5 bg-slate-800/50 text-slate-400 hover:text-white rounded-xl border border-slate-700"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-2xl font-black tracking-tight">My Reports</h1>
+          </div>
+          
+          <div className="flex items-center gap-6">
+            <button
+            onClick={() => navigate('/notifications')}
+            className="p-2.5 !bg-slate-800/50 text-slate-400 hover:text-white rounded-xl border border-slate-700 relative">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-[#0f172a]"></span>
+            </button>
+            
+            <div className="flex items-center gap-3 pl-6 border-l border-slate-800">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold">{userName}</p>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Citizen</p>
+              </div>
+              <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/20">
+                JD
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+            
+            {/* Top Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight text-white">My Reports</h2>
+                <p className="text-slate-400 mt-1 text-lg">Track the status of your submitted civic issues.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => navigate('/dashboard')}
+                  className="!bg-slate-800 hover:bg-slate-700 text-white px-5 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all"
+                >
+                  Dashboard
+                </button>
+                <button 
+                  onClick={() => navigate('/report-issue')}
+                  className="!bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-xl shadow-blue-600/20"
+                >
+                  <PlusCircle className="w-5 h-5" />
+                  New Report
+                </button>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-2 bg-slate-900/50 p-1.5 rounded-2xl w-max border border-slate-800">
+              {['ALL', 'OPEN', 'IN-PROGRESS', 'RESOLVED'].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${
+                    filter === f 
+                      ? 'bg-slate-800 text-white shadow-md' 
+                      : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            {/* Reports List */}
+            <div className="grid grid-cols-1 gap-4">
+              {filteredReports.map((report) => {
+                const CatStyle = CATEGORY_ICONS[report.category] || CATEGORY_ICONS['Pothole'];
+                const Icon = CatStyle.icon;
+                
+                return (
+                  <div 
+                    key={report.id}
+                    onClick={() => navigate(`/issue/${report.id}`)}
+                    className="bg-slate-900/50 border border-slate-800 p-6 rounded-[2rem] hover:bg-slate-800/80 hover:border-slate-600 transition-all cursor-pointer group shadow-lg text-white"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="flex items-start md:items-center gap-5">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform ${CatStyle.bg} ${CatStyle.color}`}>
+                          <Icon className="w-7 h-7" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="font-bold text-lg">{report.category}</h3>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">ID: {report.id}</span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400 font-medium">
+                            <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /> {report.location}</span>
+                            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {report.date}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between md:justify-end gap-6 md:w-64 pl-14 md:pl-0">
+                        <StatusBadge status={report.status} />
+                        <button className="w-10 h-10 rounded-xl bg-slate-800/50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-md">
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {/* Empty State */}
+              {filteredReports.length === 0 && (
+                <div className="text-center py-24 bg-slate-900/30 rounded-[2rem] border border-dashed border-slate-800">
+                  <Filter className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+                  <p className="text-slate-400 font-medium text-lg">No reports found for "{filter}".</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default MyReports;
