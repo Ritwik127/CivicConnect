@@ -20,7 +20,7 @@ import {
 const Settings = () => {
   const navigate = useNavigate();
   const [userName] = useState("John Doe");
-  const [activeTab, setActiveTab] = useState('profile'); // profile, notifications, security
+  const [activeTab, setActiveTab] = useState('profile'); // profile, notifications, security 
   
   const [formData, setFormData] = useState({
     name: 'John Doe',
