@@ -44,7 +44,7 @@ const LandingPage = () => {
               <button onClick={() => scrollToSection('home')} className={`text-sm font-bold px-5 py-2.5 rounded-xl transition-all ${isDark ? '!bg-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : '!bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700'}`}>Home</button>
               <button onClick={() => scrollToSection('how-it-works')} className={`text-sm font-bold px-5 py-2.5 rounded-xl transition-all ${isDark ? '!bg-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : '!bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700'}`}>How It Works</button>
               <button onClick={() => scrollToSection('about')} className={`text-sm font-bold px-5 py-2.5 rounded-xl transition-all ${isDark ? '!bg-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : '!bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700'}`}>About</button>
-              <button onClick={() => navigate('/login')} className={`text-sm font-bold px-5 py-2.5 rounded-xl transition-all ${isDark ? '!bg-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : '!bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700'}`}>Track Issue</button>
+              <button onClick={() => navigate('/trackissue')} className={`text-sm font-bold px-5 py-2.5 rounded-xl transition-all ${isDark ? '!bg-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' : '!bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700'}`}>Track Issue</button>
             </div>
 
             <div className="flex items-center gap-3">
@@ -61,7 +61,7 @@ const LandingPage = () => {
               >
                 Login
               </button>
-              <button onClick={() => navigate('/user/report-issue')} className={`text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg ${isDark ? '!bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20' : '!bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5'}`}>
+              <button onClick={() => navigate('/anonymousreport')} className={`text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg ${isDark ? '!bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20' : '!bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5'}`}>
                 <AlertTriangle className="w-4 h-4" />
                 <span className="hidden sm:inline">Report Issue</span>
                 <span className="sm:hidden">Report</span>
@@ -104,11 +104,11 @@ const LandingPage = () => {
                   A transparent, AI-driven platform connecting citizens with the government to solve urban problems like potholes, waste, and lighting in real-time.
                 </p>
                 <div className="flex flex-wrap justify-center lg:justify-start gap-4 pt-4">
-                  <button onClick={() => navigate('/user/report-issue')} className={`text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg ${isDark ? '!bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20' : '!bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5'}`}>
+                  <button onClick={() => navigate('/anonymousreport')} className={`text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg ${isDark ? '!bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20' : '!bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5'}`}>
                     <Camera className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     Report an Issue
                   </button>
-                  <button onClick={() => handleLogin('citizen')} className={`px-8 py-4 rounded-2xl font-bold flex items-center gap-3 transition-all group border shadow-sm ${isDark ? '!bg-slate-800/50 border-slate-700 hover:bg-slate-800 text-white' : '!bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700'}`}>
+                  <button onClick={() => navigate('/trackissue')} className={`px-8 py-4 rounded-2xl font-bold flex items-center gap-3 transition-all group border shadow-sm ${isDark ? '!bg-slate-800/50 border-slate-700 hover:bg-slate-800 text-white' : '!bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700'}`}>
                     <Search className={`w-5 h-5 transition-colors ${isDark ? 'text-slate-400 group-hover:text-white' : 'text-slate-400 group-hover:text-blue-600'}`} />
                     Track Complaint
                   </button>
@@ -358,7 +358,7 @@ const LandingPage = () => {
                 Join thousands of others making a difference today. It only takes a minute to report.
               </p>
               <div className="flex flex-wrap justify-center gap-4 pt-4">
-                <button onClick={() => navigate('/user/report-issue')} className={`text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg ${isDark ? '!bg-orange-500 text-white border border-orange-500/20 hover:bg-orange-500/20' : '!bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5'}`}>
+                <button onClick={() => navigate('/user/anonymousreport')} className={`text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg ${isDark ? '!bg-orange-500 text-white border border-orange-500/20 hover:bg-orange-500/20' : '!bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5'}`}>
                   Report an Issue Now
                 </button>
                 <button 
@@ -401,10 +401,10 @@ const LandingPage = () => {
                 <div className="space-y-6">
                   <h4 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Quick Links</h4>
                   <ul className="space-y-4">
-                    <li><button onClick={() => scrollToSection('home')} className={`text-sm font-medium transition-colors hover:underline ${isDark ? '!bg-slate-800 text-slate-400 hover:text-white' : '!bg-slate-100 text-slate-600 hover:text-blue-600'}`}>Home</button></li>
-                    <li><button onClick={() => navigate('/user/report-issue')} className={`text-sm font-medium transition-colors hover:underline ${isDark ? '!bg-slate-800 text-slate-400 hover:text-white' : '!bg-slate-100 text-slate-600 hover:text-blue-600'}`}>Report Issue</button></li>
-                    <li><button onClick={() => handleLogin('citizen')} className={`text-sm font-medium transition-colors hover:underline ${isDark ? '!bg-slate-800 text-slate-400 hover:text-white' : '!bg-slate-100 text-slate-600 hover:text-blue-600'}`}>Track Status</button></li>
-                    <li><button onClick={() => handleLogin('citizen')} className={`text-sm font-medium transition-colors hover:underline ${isDark ? '!bg-slate-800 text-slate-400 hover:text-white' : '!bg-slate-100 text-slate-600 hover:text-blue-600'}`}>Login</button></li>
+                    <li><button onClick={() => scrollToSection('home')} className={`text-sm font-medium px-4 py-2 rounded-lg transition-all ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'}`}>Home</button></li>
+                    <li><button onClick={() => navigate('/anonymousreport')} className={`text-sm font-medium px-4 py-2 rounded-lg transition-all ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'}`}>Report Issue</button></li>
+                    <li><button onClick={() => navigate('/trackissue')} className={`text-sm font-medium px-4 py-2 rounded-lg transition-all ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'}`}>Track Status</button></li>
+                    <li><button onClick={() => handleLogin('citizen')} className={`text-sm font-medium px-4 py-2 rounded-lg transition-all ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'}`}>Login</button></li>
                   </ul>
                 </div>
 
@@ -413,13 +413,13 @@ const LandingPage = () => {
                   <ul className="space-y-4">
                     <li><button
                     onClick={() => navigate('/user/dashboard')}
-                    className={`text-sm font-medium transition-colors hover:underline ${isDark ? '!bg-slate-800 text-slate-400 hover:text-white' : '!bg-slate-100 text-slate-600 hover:text-blue-600'}`}>Privacy Policy</button></li>
+                    className={`text-sm font-medium px-4 py-2 rounded-lg transition-all ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'}`}>Privacy Policy</button></li>
                     <li><button
                     onClick={() => navigate('/admin/dashboard')}
-                    className={`text-sm font-medium transition-colors hover:underline ${isDark ? '!bg-slate-800 text-slate-400 hover:text-white' : '!bg-slate-100 text-slate-600 hover:text-blue-600'}`}>Terms of Use</button></li>
+                    className={`text-sm font-medium px-4 py-2 rounded-lg transition-all ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'}`}>Terms of Use</button></li>
                     <li><button
                     onClick={() => navigate('/worker/dashboard')}
-                    className={`text-sm font-medium transition-colors hover:underline ${isDark ? '!bg-slate-800 text-slate-400 hover:text-white' : '!bg-slate-100 text-slate-600 hover:text-blue-600'}`}>SLA Guidelines</button></li>
+                    className={`text-sm font-medium px-4 py-2 rounded-lg transition-all ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50'}`}>SLA Guidelines</button></li>
                   </ul>
                 </div>
 

@@ -4,12 +4,16 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './Components/Common/LandingPage';
 import LoginPage from './Components/Common/LoginPage';
 import RegisterPage from './Components/Common/RegisterPage';
+import AnonymousReport from './Components/Common/AnonymousReport';
+import TrackIssue from './Components/Common/TrackIssue';
+
 import CitizenDashboard from './Components/User/CitizenDashboard';
 import ReportIssuePage from './Components/User/ReportIssuePage';
 import MyReports from './Components/User/MyReports';
 import IssueDetails from './Components/User/IssueDetails';
 import Notifications from './Components/User/Notifications';
 import Settings from './Components/User/Settings';
+
 import AdminDashboard from './Components/Admin/AdminDashboard';
 import IssueManagement from './Components/Admin/IssueManagement';
 import AdminIssueDetails from './Components/Admin/AdminIssueDetails';
@@ -19,6 +23,7 @@ import UserRoleManagementPage from './Components/Admin/UserRoleManagement';
 import AuditLogsPage from './Components/Admin/AuditLogs';
 import AnalyticsReports from './Components/Admin/AnalyticsReport';
 import AdminSettingsPage from './Components/Admin/AdminSettings';
+
 import WorkerDashboard from './Components/Worker/WorkerDashboard';
 import MyTasks from './Components/Worker/MyTasks';
 import TaskDetails from './Components/Worker/TaskDetails';
@@ -33,6 +38,8 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/anonymousreport" element={<AnonymousReport />} />
+        <Route path="/trackissue" element={<TrackIssue />} />
         
         {/* User Specific Routes */}
         <Route path="/user/dashboard" element={<CitizenDashboard />} />
