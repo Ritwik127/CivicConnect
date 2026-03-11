@@ -74,7 +74,7 @@ const LandingPage = () => {
         <main className="pt-10">
           
           {/* Hero Section */}
-          <section id="home" className="relative overflow-hidden pt-16 pb-32 pl-6 pr-6">
+          <section id="home" className="relative overflow-hidden pt-16 pb-16 pl-6 pr-6">
             {/* Ambient Backgrounds for Light/Dark Mode */}
             <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${isDark ? 'opacity-100' : 'opacity-0'}`}>
               <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] !bg-blue-600/20 rounded-full blur-[120px]"></div>
@@ -152,7 +152,7 @@ const LandingPage = () => {
           </section>
 
           {/* Why This System Needed */}
-          <section className="py-24 pl-6 pr-6 relative">
+          <section className="pt-10 pb-24 pl-6 pr-6 relative">
             <div>
               <div className="text-center space-y-4 mb-16">
                 <h2 className={`text-4xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Why This System is Needed?</h2>
