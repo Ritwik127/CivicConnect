@@ -71,7 +71,7 @@ const LandingPage = () => {
         </nav>
 
         {/* Main Content Wrapper (Add padding for fixed nav) */}
-        <main className="pt-20">
+        <main className="pt-10">
           
           {/* Hero Section */}
           <section id="home" className="relative overflow-hidden pt-16 pb-32 pl-6 pr-6">
@@ -87,7 +87,7 @@ const LandingPage = () => {
             </div>
 
             <div className="grid lg:grid-cols-2 gap-16 items-center relative z-10">
-              <div className="space-y-8 text-center lg:text-left">
+              <div className="space-y-6 text-center lg:text-left -mt-4 lg:-mt-6">
                 <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-widest mx-auto lg:mx-0 shadow-sm ${isDark ? '!bg-blue-500/10 border-blue-500/20 text-blue-400' : '!bg-white border-blue-200 text-blue-700'}`}>
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full !bg-blue-400 opacity-75"></span>
@@ -103,7 +103,7 @@ const LandingPage = () => {
                 <p className={`text-lg max-w-xl leading-relaxed mx-auto lg:mx-0 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   A transparent, AI-driven platform connecting citizens with the government to solve urban problems like potholes, waste, and lighting in real-time.
                 </p>
-                <div className="flex flex-wrap justify-center lg:justify-start gap-4 pt-4">
+                <div className="flex flex-wrap justify-center lg:justify-start gap-4 pt-1">
                   <button onClick={() => navigate('/anonymousreport')} className={`text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg ${isDark ? '!bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20' : '!bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5'}`}>
                     <Camera className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     Report an Issue
@@ -115,7 +115,7 @@ const LandingPage = () => {
                 </div>
               </div>
 
-              <div className="relative mx-auto w-full max-w-lg lg:max-w-none perspective-1000">
+              <div className="relative mx-auto w-full max-w-md lg:max-w-[92%] perspective-1000">
                 <div className={`border rounded-[2.5rem] p-8 backdrop-blur-md transition-all duration-500 transform hover:scale-[1.02] ${isDark ? '!bg-slate-800/40 border-slate-700 shadow-2xl shadow-black/40' : '!bg-white/80 border-slate-200/60 shadow-2xl shadow-blue-900/5'}`}>
                   <div className="flex justify-between items-start mb-12">
                     <div className={`border p-4 rounded-2xl flex items-center gap-4 animate-pulse shadow-sm ${isDark ? '!bg-white/5 border-white/10' : '!bg-white border-slate-100 shadow-emerald-500/5'}`}>
@@ -128,7 +128,7 @@ const LandingPage = () => {
                       </div>
                     </div>
                   </div>
-                  <div className={`aspect-video rounded-3xl border flex items-center justify-center mb-8 transition-colors duration-300 relative overflow-hidden ${isDark ? '!bg-slate-900/50 border-slate-700' : '!bg-slate-100/50 border-slate-200'}`}>
+                  <div className={`w-[98%] mx-auto aspect-video rounded-3xl border flex items-center justify-center mb-8 transition-colors duration-300 relative overflow-hidden ${isDark ? '!bg-slate-900/50 border-slate-700' : '!bg-slate-100/50 border-slate-200'}`}>
                      <div className={`absolute inset-0 !bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] !bg-center !bg-cover opacity-20 ${isDark ? 'invert' : ''}`}></div>
                      <MapPin className={`w-16 h-16 relative z-10 ${isDark ? 'text-slate-700 opacity-50' : 'text-blue-200 opacity-80'}`} />
                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 !bg-blue-500 rounded-full shadow-[0_0_20px_rgba(59,130,246,1)] animate-ping"></div>

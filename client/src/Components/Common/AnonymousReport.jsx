@@ -85,7 +85,7 @@ const AnonymousReport = ({ onNavigateToTrack, onNavigateHome, isDark: propIsDark
 
   const handleNavigateToTrack = () => {
     if (onNavigateToTrack) onNavigateToTrack();
-    else navigate('/track-status');
+    else navigate('/trackissue');
   };
 
   const handleNavigateHome = () => {

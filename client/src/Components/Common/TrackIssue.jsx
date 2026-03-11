@@ -8,7 +8,9 @@ import {
   ArrowLeft,
   Clock,
   Check,
-  Search
+  Search,
+  ShieldCheck,
+  Timer
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -76,26 +78,53 @@ const TrackIssue = () => {
       </div>
       
       {/* Header */}
-      <header className={`h-20 border-b px-6 sm:px-12 flex items-center justify-between shrink-0 backdrop-blur-xl z-20 transition-all duration-300 ${isDark ? 'bg-[#0f172a]/80 border-slate-800/50' : 'bg-white/80 border-slate-200/50'}`}>
-        <div className="flex items-center gap-4">
+      <header className={`border-b px-4 sm:px-8 lg:px-12 py-4 flex items-center justify-between gap-4 shrink-0 backdrop-blur-xl z-20 transition-all duration-300 ${isDark ? 'bg-[#0f172a]/80 border-slate-800/50' : 'bg-white/80 border-slate-200/50'}`}>
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <button 
             onClick={() => navigate('/')} 
             className={`p-2.5 -ml-2 rounded-xl transition-all ${isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'}`}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">
-              Track Issue
-            </h1>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-black tracking-tight truncate">Track Issue</h1>
+              <span className={`hidden sm:inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full font-black tracking-wider uppercase ${isDark ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+                <ShieldCheck className="w-3 h-3" />
+                Live Status
+              </span>
+            </div>
+            <p className={`text-xs sm:text-sm truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              Municipal Service Tracker for registered complaints
+            </p>
           </div>
         </div>
-        <button 
-          onClick={() => setIsDark(!isDark)} 
-          className={`p-2.5 rounded-xl border transition-all ${isDark ? 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-sm'}`}
-        >
-          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
+
+        <div className="hidden lg:flex items-center gap-2 xl:gap-3">
+          <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold ${isDark ? 'bg-slate-800/70 text-slate-300 border border-slate-700' : 'bg-slate-50 text-slate-700 border border-slate-200'}`}>
+            <Timer className="w-4 h-4 text-blue-500" />
+            Avg update: 18h
+          </div>
+          <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold ${isDark ? 'bg-slate-800/70 text-slate-300 border border-slate-700' : 'bg-slate-50 text-slate-700 border border-slate-200'}`}>
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            Dept: Public Works
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/anonymousreport')}
+            className={`hidden sm:inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold transition-all ${isDark ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20'}`}
+          >
+            Report New
+          </button>
+          <button 
+            onClick={() => setIsDark(!isDark)} 
+            className={`p-2.5 rounded-xl border transition-all ${isDark ? 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-sm'}`}
+          >
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 sm:p-8 relative z-10">
