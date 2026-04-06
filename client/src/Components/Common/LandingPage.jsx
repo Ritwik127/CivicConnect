@@ -5,6 +5,7 @@ import {
   Users, UserCircle2, Building2, HardHat, CheckCircle2,
   Activity, AlertTriangle, Search, ChevronRight, Sun, Moon
 } from 'lucide-react';
+import HeroIssuesMap from './HeroIssuesMap';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -128,10 +129,8 @@ const LandingPage = () => {
                       </div>
                     </div>
                   </div>
-                  <div className={`w-[98%] mx-auto aspect-video rounded-3xl border flex items-center justify-center mb-8 transition-colors duration-300 relative overflow-hidden ${isDark ? '!bg-slate-900/50 border-slate-700' : '!bg-slate-100/50 border-slate-200'}`}>
-                     <div className={`absolute inset-0 !bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] !bg-center !bg-cover opacity-20 ${isDark ? 'invert' : ''}`}></div>
-                     <MapPin className={`w-16 h-16 relative z-10 ${isDark ? 'text-slate-700 opacity-50' : 'text-blue-200 opacity-80'}`} />
-                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 !bg-blue-500 rounded-full shadow-[0_0_20px_rgba(59,130,246,1)] animate-ping"></div>
+                  <div className="mb-8">
+                    <HeroIssuesMap isDark={isDark} />
                   </div>
                   <div className="flex justify-end">
                     <div className={`border p-4 rounded-2xl flex items-center gap-4 shadow-sm ${isDark ? '!bg-white/5 border-white/10' : '!bg-white border-slate-100 shadow-orange-500/5'}`}>

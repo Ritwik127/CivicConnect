@@ -1,22 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, useInRouterContext, BrowserRouter } from 'react-router-dom';
-import { 
-  UserCircle2, Building2, HardHat, Mail, Lock, 
-  ArrowLeft, Eye, EyeOff, ChevronRight, Sun, Moon
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  UserCircle2,
+  Building2,
+  HardHat,
+  Mail,
+  Lock,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  ChevronRight,
+  Sun,
+  Moon,
 } from 'lucide-react';
+import { useAuth } from '../../lib/auth';
+
+const roles = [
+  { id: 'citizen', title: 'Citizen', icon: UserCircle2, color: 'blue', desc: 'Report and track issues in your neighborhood' },
+  { id: 'admin', title: 'Government', icon: Building2, color: 'purple', desc: 'Official portal for department and zone management' },
+  { id: 'worker', title: 'Field Worker', icon: HardHat, color: 'orange', desc: 'Access tasks and submit proof-of-work' },
+];
 
 const LoginPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+  const { login, getErrorMessage, getHomePath } = useAuth();
+
   const initialRole = location.state?.role || 'citizen';
   const [selectedRole, setSelectedRole] = useState(initialRole);
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('civic_theme') === 'dark');
 
-  // Theme Sync
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('civic_theme') === 'dark'); 
-  useEffect(() => { localStorage.setItem('civic_theme', isDark ? 'dark' : 'light'); }, [isDark]);
+  useEffect(() => {
+    localStorage.setItem('civic_theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
 
   useEffect(() => {
     if (location.state?.role) {
@@ -24,26 +44,30 @@ const LoginPage = () => {
     }
   }, [location.state?.role]);
 
-  const roles = [
-    { id: 'citizen', title: 'Citizen', icon: UserCircle2, color: 'blue', desc: 'Report and track issues in your neighborhood' },
-    { id: 'admin', title: 'Government', icon: Building2, color: 'purple', desc: 'Official portal for department and zone management' },
-    { id: 'worker', title: 'Field Worker', icon: HardHat, color: 'orange', desc: 'Access tasks and submit proof-of-work' }
-  ];
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrorMessage('');
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(`Logging in as ${selectedRole}:`, formData);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const user = await login(formData, selectedRole);
+      const destination = location.state?.from || getHomePath(user.role);
+      navigate(destination, { replace: true });
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, 'Unable to sign in right now.'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className={`w-screen h-screen font-sans flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-500 ${isDark ? '!bg-[#0f172a] text-white' : '!bg-[#f8fafc] text-slate-900'}`}>
-      
-      {/* Background Decorative Elements */}
       <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${isDark ? 'opacity-100' : 'opacity-0'}`}>
         <div className="absolute top-[10%] left-[10%] w-[400px] h-[400px] !bg-blue-600/10 rounded-full blur-[100px]"></div>
         <div className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] !bg-purple-600/10 rounded-full blur-[100px]"></div>
@@ -53,9 +77,8 @@ const LoginPage = () => {
         <div className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] !bg-orange-400/10 rounded-full blur-[100px]"></div>
       </div>
 
-      {/* Top Navigation & Theme Toggle */}
       <div className="absolute top-8 left-8 md:top-12 md:left-12 z-50 flex items-center gap-4">
-        <button 
+        <button
           onClick={() => navigate('/')}
           className={`flex items-center gap-2 transition-all group rounded-xl pr-3 shadow-sm ${isDark ? '!bg-black/50 text-slate-400 hover:text-white border border-slate-800' : '!bg-white/80 border border-slate-200 text-slate-600 hover:text-slate-900 shadow-slate-200/50'}`}
         >
@@ -65,9 +88,9 @@ const LoginPage = () => {
           <span className="text-sm font-bold px-1">Back to Home</span>
         </button>
       </div>
-      
+
       <div className="absolute top-8 right-8 md:top-12 md:right-12 z-50">
-        <button 
+        <button
           onClick={() => setIsDark(!isDark)}
           className={`p-2.5 rounded-xl transition-all border shadow-sm ${isDark ? '!bg-slate-800/80 border-slate-700 text-slate-300 hover:!bg-slate-700' : '!bg-white/80 border-slate-200 text-slate-700 hover:!bg-slate-100 shadow-slate-200/50'}`}
         >
@@ -75,7 +98,6 @@ const LoginPage = () => {
         </button>
       </div>
 
-      {/* Login Container */}
       <div className="w-full max-w-xl relative z-10 mt-16 md:mt-0 max-h-[90vh] overflow-y-auto custom-scrollbar px-2">
         <div className="text-center mb-10 space-y-2">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -88,7 +110,6 @@ const LoginPage = () => {
           <p className={`font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Please select your role and sign in to your portal</p>
         </div>
 
-        {/* Role Selection */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {roles.map((role) => {
             const Icon = role.icon;
@@ -97,40 +118,44 @@ const LoginPage = () => {
               <button
                 key={role.id}
                 onClick={() => setSelectedRole(role.id)}
+                type="button"
                 className={`flex flex-col items-center p-4 rounded-2xl border transition-all duration-300 ${
-                  isActive 
-                  ? (isDark ? `!bg-slate-800 border-${role.color}-500 shadow-[0_0_20px_rgba(59,130,246,0.15)] transform scale-105` : `!bg-white border-${role.color}-400 shadow-lg shadow-${role.color}-500/10 transform scale-105`)
-                  : (isDark ? '!bg-slate-900/50 border-slate-800 hover:border-slate-700 hover:!bg-slate-800/80' : '!bg-white/60 border-slate-200 hover:border-slate-300 hover:!bg-white')
+                  isActive
+                    ? (isDark ? `!bg-slate-800 border-${role.color}-500 shadow-[0_0_20px_rgba(59,130,246,0.15)] transform scale-105` : `!bg-white border-${role.color}-400 shadow-lg shadow-${role.color}-500/10 transform scale-105`)
+                    : (isDark ? '!bg-slate-900/50 border-slate-800 hover:border-slate-700 hover:!bg-slate-800/80' : '!bg-white/60 border-slate-200 hover:border-slate-300 hover:!bg-white')
                 }`}
               >
-                <div className={`p-3 rounded-xl mb-3 transition-colors ${
-                  isActive ? `!bg-${role.color}-500/20 text-${role.color}-500` : (isDark ? '!bg-slate-800 text-slate-500' : '!bg-slate-100 text-slate-500')
-                }`}>
+                <div className={`p-3 rounded-xl mb-2 transition-colors ${isActive ? `!bg-${role.color}-500/20 text-${role.color}-500` : (isDark ? '!bg-slate-800 text-slate-500' : '!bg-slate-100 text-slate-500')}`}>
                   <Icon className="w-6 h-6" />
                 </div>
                 <span className={`text-sm font-bold ${isActive ? (isDark ? 'text-white' : 'text-slate-900') : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
                   {role.title}
                 </span>
+                <span className={`mt-2 text-center text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{role.desc}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Form Card */}
         <div className={`border p-8 rounded-[2.5rem] backdrop-blur-xl transition-all duration-500 ${isDark ? '!bg-slate-900/80 border-slate-800 shadow-2xl shadow-black/50' : '!bg-white/90 border-slate-200/60 shadow-2xl shadow-blue-900/5'}`}>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className={`space-y-2 text-sm font-medium px-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               Currently logging in as: <span className="text-blue-500 font-bold capitalize">{selectedRole}</span>
             </div>
 
-            {/* Email Field */}
+            {errorMessage ? (
+              <div className={`rounded-2xl border px-4 py-3 text-sm ${isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-200' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+                {errorMessage}
+              </div>
+            ) : null}
+
             <div className="space-y-2">
               <label className={`text-sm font-bold ml-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Email Address</label>
               <div className="relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors">
                   <Mail className="w-5 h-5" />
                 </div>
-                <input 
+                <input
                   type="email"
                   name="email"
                   required
@@ -142,18 +167,16 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {/* Password Field */}
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
                 <label className={`text-sm font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Password</label>
-                <button type="button" className={`text-sm font-medium transition-colors hover:underline ${isDark ? '!bg-slate-800 text-slate-400 hover:text-white' : '!bg-slate-100 text-slate-600 hover:text-blue-600'}`}>Forgot Password?</button>
               </div>
               <div className="relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors">
                   <Lock className="w-5 h-5" />
                 </div>
-                <input 
-                  type={showPassword ? "text" : "password"}
+                <input
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   required
                   placeholder="••••••••"
@@ -161,7 +184,7 @@ const LoginPage = () => {
                   onChange={handleInputChange}
                   className={`w-full border focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl py-4 pl-12 pr-12 outline-none transition-all font-medium ${isDark ? '!bg-slate-950/50 border-slate-800 text-slate-200 placeholder:text-slate-600' : '!bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:!bg-white'}`}
                 />
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className={`absolute right-4 top-1/2 -translate-y-1/2 transition-colors ${isDark ? '!bg-slate-800 text-slate-500 hover:text-white' : '!bg-slate-200 text-slate-400 hover:text-slate-700'}`}
@@ -171,24 +194,30 @@ const LoginPage = () => {
               </div>
             </div>
 
-            <button 
-              type="submit" 
-              className={`w-full font-bold py-4 rounded-2xl transition-all shadow-xl flex items-center justify-center gap-2 group mt-4 ${isDark ? '!bg-blue-600 hover:!bg-blue-500 text-white shadow-blue-900/20' : '!bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-blue-600/20 hover:-translate-y-0.5'}`}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full font-bold py-4 rounded-2xl transition-all shadow-xl flex items-center justify-center gap-2 group mt-4 disabled:opacity-70 ${isDark ? '!bg-blue-600 hover:!bg-blue-500 text-white shadow-blue-900/20' : '!bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-blue-600/20 hover:-translate-y-0.5'}`}
             >
-              Sign In to Dashboard
+              {isSubmitting ? 'Signing In...' : 'Sign In to Dashboard'}
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </form>
 
           <div className={`mt-8 pt-8 border-t text-center ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-            <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Don't have an account?{' '}
-              <button onClick={() => navigate('/register')} className={`text-sm font-medium transition-colors hover:underline ${isDark ? '!bg-slate-800 text-blue-600 hover:text-white' : '!bg-slate-100 text-blue-600 hover:text-blue-600'}`}>Register now</button>
-            </p>
+            {selectedRole === 'citizen' ? (
+              <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                Don&apos;t have an account?{' '}
+                <button onClick={() => navigate('/register', { state: { role: 'citizen' } })} className={`text-sm font-medium transition-colors hover:underline ${isDark ? '!bg-slate-800 text-blue-600 hover:text-white' : '!bg-slate-100 text-blue-600 hover:text-blue-600'}`}>Register now</button>
+              </p>
+            ) : (
+              <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                Government and field worker accounts are created by the system administrator.
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Footer info */}
         <div className="mt-12 text-center text-slate-500 text-xs font-medium">
           © 2026 CivicConnect. Secure Gateway • Encrypted Access
         </div>

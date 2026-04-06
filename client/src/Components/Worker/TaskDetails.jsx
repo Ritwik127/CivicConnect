@@ -1,396 +1,386 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  MapPin, 
+import {
+  AlertCircle,
+  ArrowLeft,
+  Bell,
+  CheckCircle2,
   Clock,
+  FileText,
   LayoutDashboard,
   ListTodo,
-  MessageSquare,
-  Settings,
+  Loader2,
   LogOut,
-  AlertTriangle,
-  CheckCircle2,
-  HardHat,
-  ArrowLeft,
+  MapPin,
+  MessageSquare,
+  Moon,
   Navigation,
   Upload,
-  X,
-  FileText,
-  Send,
-  UserCircle2,
-  Camera,
-  Bell,
+  Settings,
   Sun,
-  Moon
 } from 'lucide-react';
+import {
+  fetchWorkerTaskDetails,
+  getReadableErrorMessage,
+  markWorkerTaskInProgress,
+  startWorkerTask,
+  submitWorkerResolutionNotes,
+  submitWorkerTaskProof,
+} from '../../lib/api';
+import { useAuth } from '../../lib/auth';
 
-const MOCK_TASKS = [
-  { 
-    id: 'TSK-9042', issueId: 'ISS-9042', category: 'Pothole Repair', 
-    description: 'Deep pothole reported in the middle lane. Requires immediate asphalt filling to prevent vehicle damage.',
-    location: 'Oxford Street, Downtown', coordinates: 'Lat: 28.6139, Lng: 77.2090',
-    priority: 'High', status: 'IN-PROGRESS', slaDeadline: 'Today, 2:00 PM', timeRemaining: '3h 15m', distance: '1.2 km away',
-    reportedImg: 'https://via.placeholder.com/400x300?text=Pothole+Before'
-  },
-  { 
-    id: 'TSK-9045', issueId: 'ISS-9045', category: 'Traffic Light Fix', 
-    description: 'Traffic signal at intersection is completely off. High risk of accidents.',
-    location: 'Main St & 5th Ave', coordinates: 'Lat: 28.6210, Lng: 77.2150',
-    priority: 'Critical', status: 'IN-PROGRESS', slaDeadline: 'Today, 12:30 PM', timeRemaining: '1h 45m', distance: '0.8 km away',
-    reportedImg: 'https://via.placeholder.com/400x300?text=Traffic+Light+Issue'
-  },
-  { 
-    id: 'TSK-9011', issueId: 'ISS-9011', category: 'Fallen Tree Removal', 
-    description: 'Large tree branch blocking the pedestrian walkway and part of the bike lane.',
-    location: 'Central Park North', coordinates: 'Lat: 28.6300, Lng: 77.2200',
-    priority: 'Medium', status: 'RESOLVED', slaDeadline: 'Completed', timeRemaining: '0h 0m', distance: '3.5 km away',
-    reportedImg: 'https://via.placeholder.com/400x300?text=Tree+Before'
-  },
-  { 
-    id: 'TSK-8992', issueId: 'ISS-8992', category: 'Sewer Leak', 
-    description: 'Minor sewage overflow near the residential complex gate.',
-    location: 'West End Blvd', coordinates: 'Lat: 28.6100, Lng: 77.2000',
-    priority: 'High', status: 'ASSIGNED', slaDeadline: 'Tomorrow, 10:00 AM', timeRemaining: '20h 30m', distance: '4.1 km away',
-    reportedImg: 'https://via.placeholder.com/400x300?text=Sewer+Leak+Before'
+function formatLabel(value) {
+  return String(value || '').replaceAll('_', ' ');
+}
+
+function formatDateTime(value) {
+  if (!value) return 'Not available';
+  try {
+    return new Date(value).toLocaleString();
+  } catch {
+    return value;
   }
-];
+}
 
-const REPORTED_PHOTO_FALLBACK = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" fill="none">
-    <defs>
-      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#f1f5f9"/>
-        <stop offset="100%" stop-color="#e2e8f0"/>
-      </linearGradient>
-    </defs>
-    <rect width="1200" height="675" fill="url(#bg)"/>
-    <circle cx="280" cy="160" r="110" fill="#fdba74" fill-opacity="0.35"/>
-    <circle cx="930" cy="520" r="140" fill="#fbbf24" fill-opacity="0.25"/>
-    <rect x="390" y="190" width="420" height="295" rx="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="8"/>
-    <circle cx="525" cy="305" r="44" fill="#94a3b8"/>
-    <path d="M445 430l95-92a24 24 0 0134 0l52 51a24 24 0 0034 0l44-44a24 24 0 0134 0l72 85H445z" fill="#cbd5e1"/>
-    <text x="600" y="560" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="#475569">Reported Photo Unavailable</text>
-  </svg>`
-)}`;
-
-const PriorityBadge = ({ priority }) => {
-  const styles = {
-    'Critical': '!bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
-    'High': '!bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
-    'Medium': '!bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20',
-    'Low': '!bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-  };
-  return <span className={`px-2.5 py-1 rounded text-[10px] font-black tracking-widest uppercase border shadow-sm ${styles[priority] || styles['Medium']}`}>{priority} Priority</span>;
-};
+function initialsFor(name) {
+  return String(name || 'CW')
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 const TaskDetails = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Retrieves ID from route, e.g., /worker/taskdetails/TSK-9042
-  
-  const currentTask = MOCK_TASKS.find(t => t.id === id) || MOCK_TASKS[0]; // Fallback to first if not found
-
-  const fileInputRef = useRef(null);
-  const [workerName] = useState("Mike Reynolds");
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('civic_theme') === 'dark'); 
-  useEffect(() => { localStorage.setItem('civic_theme', isDark ? 'dark' : 'light'); }, [isDark]);
-
+  const { taskCode } = useParams();
+  const { user, logout } = useAuth();
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('civic_theme') === 'dark');
+  const [task, setTask] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [isStartingTask, setIsStartingTask] = useState(false);
+  const [isMarkingProgress, setIsMarkingProgress] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [submitMessage, setSubmitMessage] = useState('');
+  const [resolutionNotes, setResolutionNotes] = useState('');
   const [proofFile, setProofFile] = useState(null);
-  const [resolutionNotes, setResolutionNotes] = useState("");
-  const [chatMessage, setChatMessage] = useState("");
-  const [reportedImageSrc, setReportedImageSrc] = useState(currentTask.reportedImg || REPORTED_PHOTO_FALLBACK);
 
   useEffect(() => {
-    setReportedImageSrc(currentTask.reportedImg || REPORTED_PHOTO_FALLBACK);
-  }, [currentTask.id]);
+    localStorage.setItem('civic_theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) setProofFile(file);
+  useEffect(() => {
+    let isActive = true;
+    async function loadTask() {
+      try {
+        setIsLoading(true);
+        setErrorMessage('');
+        const data = await fetchWorkerTaskDetails(taskCode);
+        if (isActive) {
+          setTask(data);
+          setResolutionNotes(data?.resolution_notes || '');
+        }
+      } catch (error) {
+        if (isActive) setErrorMessage(getReadableErrorMessage(error, 'Unable to load task details.'));
+      } finally {
+        if (isActive) setIsLoading(false);
+      }
+    }
+    loadTask();
+    return () => {
+      isActive = false;
+    };
+  }, [taskCode]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true, state: { role: 'worker' } });
   };
 
-  const handleSubmitProof = (e) => {
-    e.preventDefault();
-    alert("Proof of Work submitted for supervisor verification!");
-    navigate('/worker/tasks');
+  const workerName = user?.full_name || 'Worker';
+  const workerInitials = useMemo(() => initialsFor(workerName), [workerName]);
+  const issue = task?.issue || {};
+  const latestProof = task?.proofs?.length ? task.proofs[task.proofs.length - 1] : null;
+  const issuePhotos = task?.issue?.photos || [];
+
+  const syncTaskFromResponse = (response, fallbackMessage) => {
+    if (response?.task) {
+      setTask(response.task);
+      setResolutionNotes(response.task.resolution_notes || '');
+    }
+    setSubmitMessage(response?.message || fallbackMessage);
+  };
+
+  const handleStartTask = async () => {
+    try {
+      setIsStartingTask(true);
+      setErrorMessage('');
+      setSubmitMessage('');
+      const response = await startWorkerTask(taskCode);
+      syncTaskFromResponse(response, 'Task started.');
+    } catch (error) {
+      setErrorMessage(getReadableErrorMessage(error, 'Unable to start task.'));
+    } finally {
+      setIsStartingTask(false);
+    }
+  };
+
+  const handleMarkTaskInProgress = async () => {
+    try {
+      setIsMarkingProgress(true);
+      setErrorMessage('');
+      setSubmitMessage('');
+      const response = await markWorkerTaskInProgress(taskCode);
+      syncTaskFromResponse(response, 'Task marked as in progress.');
+    } catch (error) {
+      setErrorMessage(getReadableErrorMessage(error, 'Unable to update task status.'));
+    } finally {
+      setIsMarkingProgress(false);
+    }
+  };
+
+  const handleProofSubmit = async (event) => {
+    event.preventDefault();
+    if (!proofFile) {
+      setErrorMessage('Please upload a proof photo or video before submitting proof.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setErrorMessage('');
+      setSubmitMessage('');
+      const response = await submitWorkerTaskProof(taskCode, {
+        proofFile,
+        notes: resolutionNotes,
+      });
+      setProofFile(null);
+      syncTaskFromResponse(response, 'Proof submitted successfully.');
+    } catch (error) {
+      setErrorMessage(getReadableErrorMessage(error, 'Unable to submit proof.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResolutionNotesSubmit = async (event) => {
+    event.preventDefault();
+    if (!resolutionNotes.trim()) {
+      setErrorMessage('Please add resolution notes before submitting.');
+      return;
+    }
+
+    try {
+      setIsSavingNotes(true);
+      setErrorMessage('');
+      setSubmitMessage('');
+      const response = await submitWorkerResolutionNotes(taskCode, resolutionNotes);
+      syncTaskFromResponse(response, 'Resolution notes submitted successfully.');
+    } catch (error) {
+      setErrorMessage(getReadableErrorMessage(error, 'Unable to submit resolution notes.'));
+    } finally {
+      setIsSavingNotes(false);
+    }
   };
 
   return (
-    <div className={`flex h-screen w-screen font-sans overflow-hidden transition-colors duration-500 relative ${isDark ? '!bg-[#0f172a] text-white' : '!bg-[#f8fafc] text-slate-800'}`}>
-      
-      {/* Ambient Backgrounds */}
-      <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 z-0 ${isDark ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="absolute top-[10%] left-[20%] w-[30%] h-[30%] !bg-orange-600/10 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[20%] right-[10%] w-[40%] h-[40%] !bg-amber-600/10 rounded-full blur-[120px]"></div>
-      </div>
-      <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 z-0 ${isDark ? 'opacity-0' : 'opacity-100'}`}>
-        <div className="absolute top-[10%] left-[20%] w-[30%] h-[30%] !bg-orange-400/10 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[20%] right-[10%] w-[40%] h-[40%] !bg-amber-400/10 rounded-full blur-[100px]"></div>
-      </div>
-
-      {/* Worker Sidebar */}
-      <aside className={`hidden lg:flex flex-col w-64 border-r h-full shrink-0 relative z-20 backdrop-blur-xl transition-all duration-300 ${isDark ? '!bg-[#0f172a]/80 border-slate-800 shadow-lg shadow-black/20' : '!bg-white/80 border-slate-200/80 shadow-sm'}`}>
+    <div className={`flex min-h-screen w-screen font-sans overflow-hidden transition-colors duration-500 relative ${isDark ? '!bg-[#0f172a] text-white' : '!bg-[#f8fafc] text-slate-800'}`}>
+      <aside className={`hidden lg:flex flex-col w-64 border-r h-screen shrink-0 relative z-20 backdrop-blur-xl ${isDark ? '!bg-[#0f172a]/80 border-slate-800' : '!bg-white/80 border-slate-200/80 shadow-sm'}`}>
         <div className="p-6 flex items-center gap-3 mb-6">
-          <div className="!bg-gradient-to-br from-orange-500 to-amber-600 p-2 rounded-xl shadow-lg shadow-orange-500/30">
-            <span className="font-bold text-xl text-white">C</span>
-          </div>
+          <div className="!bg-gradient-to-br from-orange-500 to-amber-600 p-2 rounded-xl shadow-lg shadow-orange-500/30"><span className="font-bold text-xl text-white">C</span></div>
           <span className={`font-bold text-xl tracking-tight ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>CivicWorker</span>
         </div>
-
-        <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
-          <button onClick={() => navigate('/worker/dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all text-left ${isDark ? '!bg-orange-500/10 text-slate-400 hover:!bg-slate-800/80 hover:text-white' : '!bg-orange-50 text-slate-600 hover:!bg-white hover:text-orange-700 hover:shadow-sm'}`}>
-            <LayoutDashboard className="w-5 h-5" /> Dashboard
-          </button>
-          <button onClick={() => navigate('/worker/tasks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold border transition-all text-left ${isDark ? '!bg-orange-500/10 text-orange-400 border-orange-500/20' : '!bg-orange-50 text-orange-700 border-orange-200 shadow-sm'}`}>
-            <ListTodo className="w-5 h-5" /> My Tasks
-          </button>
-          <button onClick={() => navigate('/worker/communications')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all text-left ${isDark ? '!bg-orange-500/10 text-slate-400 hover:!bg-slate-800/80 hover:text-white' : '!bg-orange-50 text-slate-600 hover:!bg-white hover:text-orange-700 hover:shadow-sm'}`}>
-            <MessageSquare className="w-5 h-5" /> Communications
-          </button>
+        <nav className="flex-1 px-4 space-y-2">
+          <button onClick={() => navigate('/worker/dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left ${isDark ? 'text-slate-400' : 'text-slate-600'}`}><LayoutDashboard className="w-5 h-5" /> Dashboard</button>
+          <button onClick={() => navigate('/worker/tasks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold border text-left ${isDark ? '!bg-orange-500/10 text-orange-400 border-orange-500/20' : '!bg-orange-50 text-orange-700 border-orange-200 shadow-sm'}`}><ListTodo className="w-5 h-5" /> My Tasks</button>
+          <button onClick={() => navigate('/worker/communications')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left ${isDark ? 'text-slate-400' : 'text-slate-600'}`}><MessageSquare className="w-5 h-5" /> Communications</button>
         </nav>
-
         <div className={`p-4 border-t space-y-2 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-          <button onClick={() => navigate('/worker/settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all text-left ${isDark ? '!bg-orange-500/10 text-slate-400 hover:!bg-slate-800/80 hover:text-white' : '!bg-orange-50 text-slate-600 hover:!bg-white hover:text-orange-700 hover:shadow-sm'}`}>
-            <Settings className="w-5 h-5" /> Settings
-          </button>
-          <button onClick={() => navigate('/login')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-rose-500 transition-all text-left ${isDark ? '!bg-orange-500/10 hover:!bg-rose-500/10' : '!bg-orange-50 hover:!bg-rose-50 hover:shadow-sm'}`}>
-            <LogOut className="w-5 h-5" /> Logout
-          </button>
+          <button onClick={() => navigate('/worker/settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left ${isDark ? 'text-slate-400' : 'text-slate-600'}`}><Settings className="w-5 h-5" /> Settings</button>
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left text-rose-500"><LogOut className="w-5 h-5" /> Logout</button>
         </div>
       </aside>
 
-      {/* Main Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative z-10">
-        
-        {/* Header */}
-        <header className={`h-20 border-b px-8 flex items-center justify-between shrink-0 backdrop-blur-xl transition-all duration-300 ${isDark ? '!bg-[#0f172a]/80 border-slate-800' : '!bg-white/80 border-slate-200/80 shadow-sm'}`}>
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative z-10">
+        <header className={`h-20 border-b px-8 flex items-center justify-between shrink-0 backdrop-blur-xl ${isDark ? '!bg-[#0f172a]/80 border-slate-800' : '!bg-white/80 border-slate-200/80 shadow-sm'}`}>
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/worker/tasks')} className={`lg:hidden p-2.5 rounded-xl border transition-all ${isDark ? '!bg-slate-800/50 text-slate-400 hover:text-white border-slate-700' : '!bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'}`}>
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h1 className="text-2xl font-black tracking-tight hidden sm:block">Task Execution</h1>
+            <button onClick={() => navigate('/worker/tasks')} className={`p-2.5 rounded-xl border ${isDark ? '!bg-slate-800/50 text-slate-400 border-slate-700' : '!bg-slate-100 text-slate-600 border-slate-200'}`}><ArrowLeft className="w-5 h-5" /></button>
+            <h1 className="text-2xl font-black tracking-tight hidden sm:block">Task Details</h1>
           </div>
-          
           <div className="flex items-center gap-4 sm:gap-6">
-            <button onClick={() => setIsDark(!isDark)} className={`p-2.5 rounded-xl border transition-all shadow-sm ${isDark ? '!bg-slate-800/50 border-slate-700 text-slate-400 hover:text-white hover:!bg-slate-800' : '!bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:!bg-slate-50'}`}>
-              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-
-            {/* Notification Bell included as requested */}
-            <button onClick={() => navigate('/worker/notifications')} className={`p-2.5 rounded-xl border relative transition-all shadow-sm ${isDark ? '!bg-slate-800/50 border-slate-700 text-slate-400 hover:text-white hover:!bg-slate-800' : '!bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:!bg-slate-50'}`}>
-              <Bell className="w-5 h-5" />
-              <span className={`absolute top-2 right-2 w-2 h-2 !bg-orange-500 rounded-full border-2 ${isDark ? 'border-[#0f172a]' : 'border-white'}`}></span>
-            </button>
-            
+            <button onClick={() => setIsDark(!isDark)} className={`p-2.5 rounded-xl border ${isDark ? '!bg-slate-800/50 border-slate-700 text-slate-400' : '!bg-white border-slate-200 text-slate-600'}`}>{isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</button>
+            <button onClick={() => navigate('/worker/notifications')} className={`p-2.5 rounded-xl border ${isDark ? '!bg-slate-800/50 border-slate-700 text-slate-400' : '!bg-white border-slate-200 text-slate-600'}`}><Bell className="w-5 h-5" /></button>
             <div className={`flex items-center gap-3 pl-4 sm:pl-6 border-l ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
               <div className="text-right hidden sm:block">
                 <p className={`text-sm font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{workerName}</p>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>Team Alpha</p>
+                <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>{user?.department || 'Worker'}</p>
               </div>
-              <div className="w-11 h-11 !bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-orange-900/20">
-                MR
-              </div>
+              <div className="w-11 h-11 !bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center font-bold text-white">{workerInitials}</div>
             </div>
           </div>
         </header>
 
-        {/* Scrollable Content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
-          <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-            
-            {/* Contextual Nav */}
-            <div className="flex items-center justify-between">
-              <button onClick={() => navigate('/worker/tasks')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl group transition-all border shadow-sm ${isDark ? '!bg-orange-600/10 text-orange-400 hover:text-white border-orange-500/20 hover:border-orange-500/40' : '!bg-white text-orange-700 hover:!bg-orange-50 border-orange-200 hover:border-orange-300'}`}>
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                <span className="font-bold text-sm">Back to Queue</span>
-              </button>
-            </div>
-
-            <div className="grid lg:grid-cols-3 gap-8">
-              
-              {/* Left Column: Task Overview & Proof of Work */}
-              <div className="lg:col-span-2 space-y-8">
-                
-                {/* Task Header Card */}
-                <div className={`border rounded-[2.5rem] p-8 shadow-xl backdrop-blur-xl transition-all duration-500 ${isDark ? '!bg-slate-900/80 border-slate-800 shadow-black/20' : '!bg-white/90 border-slate-200/60 shadow-slate-200/50'}`}>
-                  <div className={`flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-8 pb-6 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                    <div className="flex items-center gap-5">
-                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner ${isDark ? '!bg-orange-500/10 text-orange-400' : '!bg-orange-100 text-orange-600'}`}>
-                        <AlertTriangle className="w-8 h-8" />
-                      </div>
-                      <div>
-                        <h1 className="text-3xl font-black tracking-tight">{currentTask.category}</h1>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-2">
-                          Task ID: <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{currentTask.id}</span>
-                        </p>
-                      </div>
-                    </div>
-                    <PriorityBadge priority={currentTask.priority} />
-                  </div>
-
-                  <div className="space-y-6">
+          <div className="max-w-5xl mx-auto space-y-8">
+            {isLoading ? (
+              <div className={`border rounded-[2.5rem] p-12 flex items-center justify-center gap-3 ${isDark ? '!bg-slate-900/80 border-slate-800' : '!bg-white/90 border-slate-200/60'}`}><Loader2 className="w-5 h-5 animate-spin text-orange-500" /><span className="font-medium">Loading task details...</span></div>
+            ) : errorMessage ? (
+              <div className={`border rounded-[2.5rem] p-8 flex items-start gap-3 ${isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-200' : 'border-rose-200 bg-rose-50 text-rose-700'}`}><AlertCircle className="w-5 h-5 mt-0.5" /><div><p className="font-bold">Unable to load task details</p><p className="text-sm mt-1">{errorMessage}</p></div></div>
+            ) : (
+              <>
+                <div className={`border rounded-[2.5rem] p-8 ${isDark ? '!bg-slate-900/80 border-slate-800' : '!bg-white/90 border-slate-200/60 shadow-slate-200/50'}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-8 pb-6 border-b border-slate-200/20">
                     <div>
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1">Location Address</p>
-                      <div className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between gap-4 ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
-                        <div className="flex flex-col gap-1">
-                          <p className={`font-bold flex items-center gap-3 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                            <MapPin className="w-5 h-5 text-orange-500" /> {currentTask.location}
-                          </p>
-                          <p className="text-[10px] text-slate-500 font-mono ml-8">{currentTask.coordinates}</p>
-                        </div>
-                        <button className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 active:scale-95 ${isDark ? '!bg-blue-600 hover:!bg-blue-500 text-white' : '!bg-blue-600 hover:!bg-blue-700 text-white'}`}>
-                          <Navigation className="w-4 h-4" /> Navigate
-                        </button>
-                      </div>
+                      <h1 className="text-3xl font-black tracking-tight">{issue.title || issue.category || task?.title}</h1>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-2">Task Code: <span>{task?.task_code}</span></p>
                     </div>
-
-                    <div>
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1">Issue Description</p>
-                      <p className={`p-5 rounded-2xl border shadow-inner font-medium text-sm leading-relaxed ${isDark ? '!bg-slate-950/50 border-slate-800 text-slate-300' : '!bg-slate-50/80 border-slate-200 text-slate-700'}`}>
-                        {currentTask.description}
-                      </p>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1">Reported Photo</p>
-                        <div className={`aspect-video rounded-2xl border flex items-center justify-center overflow-hidden relative shadow-sm ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                          <img
-                            src={reportedImageSrc}
-                            alt="Reported issue"
-                            onError={() => {
-                              if (reportedImageSrc !== REPORTED_PHOTO_FALLBACK) {
-                                setReportedImageSrc(REPORTED_PHOTO_FALLBACK);
-                              }
-                            }}
-                            className="w-full h-full object-cover opacity-60"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="bg-black/50 text-white px-3 py-1.5 rounded-lg text-xs font-bold backdrop-blur-md">View Original</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        <div className={`p-4 rounded-2xl border shadow-sm h-full flex flex-col justify-center ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
-                          <div className="flex items-center gap-3 text-amber-500 mb-2">
-                            <Clock className="w-5 h-5" />
-                            <span className="font-bold uppercase tracking-wider text-xs">SLA Time Remaining</span>
-                          </div>
-                          <p className="text-3xl font-black">{currentTask.timeRemaining}</p>
-                          <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase">Target: {currentTask.slaDeadline}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Proof of Work Submission Tab */}
-                <div className={`border rounded-[2.5rem] p-8 shadow-xl backdrop-blur-xl transition-all duration-500 ${isDark ? '!bg-slate-900/80 border-slate-800 shadow-black/20' : '!bg-white/90 border-slate-200/60 shadow-slate-200/50'}`}>
-                  <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                    <CheckCircle2 className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} /> Complete Task & Submit Proof
-                  </h3>
-
-                  <form onSubmit={handleSubmitProof} className="space-y-6">
-                    {!proofFile ? (
-                      <div onClick={() => fileInputRef.current.click()} className={`border-2 border-dashed rounded-[2rem] p-12 flex flex-col items-center text-center space-y-4 transition-all cursor-pointer group ${isDark ? 'border-slate-700 !bg-slate-950/30 hover:border-emerald-500/50 hover:!bg-emerald-500/5' : 'border-slate-300 !bg-slate-50/50 hover:border-emerald-400 hover:!bg-emerald-50'}`}>
-                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileUpload} />
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm ${isDark ? '!bg-slate-800 text-emerald-400' : '!bg-white text-emerald-600'}`}>
-                          <Camera className="w-8 h-8" />
-                        </div>
-                        <div>
-                          <p className={`font-bold text-lg ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>Capture "After" Photo/Video</p>
-                          <p className="text-xs text-slate-500 mt-1 font-medium">Clear evidence is required to close this task.</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={`relative group rounded-[2rem] overflow-hidden border aspect-[21/9] flex items-center justify-center shadow-inner ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
-                        <div className="text-center space-y-2">
-                           <div className="w-16 h-16 !bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                             <FileText className="w-8 h-8 text-emerald-500" />
-                           </div>
-                           <p className="font-bold text-emerald-500 text-sm">{proofFile.name}</p>
-                           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Ready for upload</p>
-                        </div>
-                        <button type="button" onClick={() => setProofFile(null)} className="absolute top-4 right-4 p-2 !bg-rose-500 hover:!bg-rose-600 text-white rounded-full shadow-lg transition-colors hover:scale-110">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="space-y-3">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Resolution Notes (Required)</label>
-                      <textarea 
-                        required
-                        value={resolutionNotes} onChange={(e) => setResolutionNotes(e.target.value)}
-                        placeholder="Detail the work done, materials used, etc..." 
-                        className={`w-full border rounded-[1.5rem] p-5 min-h-[120px] focus:border-emerald-500 outline-none transition-all focus:ring-4 focus:ring-emerald-500/10 font-medium shadow-inner ${isDark ? '!bg-slate-950/50 border-slate-800 text-slate-200 placeholder:text-slate-600' : '!bg-slate-50/80 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:!bg-white'}`} 
-                      />
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      disabled={!proofFile || !resolutionNotes}
-                      className={`w-full py-4 disabled:opacity-50 text-white rounded-2xl font-bold transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 ${isDark ? '!bg-emerald-600 hover:!bg-emerald-500 shadow-emerald-900/20' : '!bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-emerald-600/30'}`}
-                    >
-                      <CheckCircle2 className="w-5 h-5" /> Submit for Supervisor Approval
-                    </button>
-                  </form>
-                </div>
-              </div>
-
-              {/* Right Column: Communication */}
-              <div className="space-y-8">
-                <div className={`border rounded-[2.5rem] p-6 shadow-xl flex flex-col h-full backdrop-blur-xl transition-all duration-500 ${isDark ? '!bg-slate-900/80 border-slate-800 shadow-black/20' : '!bg-white/90 border-slate-200/60 shadow-slate-200/50'}`}>
-                  <div className={`flex items-center gap-3 border-b pb-4 mb-4 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? '!bg-blue-500/10 text-blue-400' : '!bg-blue-100 text-blue-600'}`}>
-                      <UserCircle2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm">Supervisor Chat</h3>
-                      <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full !bg-emerald-500"></span> Online
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Chat Area */}
-                  <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar min-h-[300px]">
-                    <div className="flex flex-col gap-1 items-start">
-                      <span className="text-[10px] font-bold text-slate-500 ml-2">Supervisor • 10:45 AM</span>
-                      <div className={`p-3 rounded-2xl rounded-tl-sm text-sm font-medium shadow-sm max-w-[85%] ${isDark ? '!bg-slate-800 text-slate-200' : '!bg-slate-100 text-slate-800'}`}>
-                        Hi Mike, ensure you clear the debris before filling the pothole for {currentTask.id}.
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1 items-end">
-                      <span className="text-[10px] font-bold text-slate-500 mr-2">You • 10:50 AM</span>
-                      <div className={`p-3 rounded-2xl rounded-tr-sm text-sm font-medium shadow-sm text-white max-w-[85%] ${isDark ? '!bg-orange-600' : '!bg-orange-500'}`}>
-                        Got it. Arriving at the location now.
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Input Area */}
-                  <div className="mt-4 pt-4">
-                    <div className="relative">
-                      <input 
-                        type="text" 
-                        value={chatMessage}
-                        onChange={(e) => setChatMessage(e.target.value)}
-                        placeholder="Type message..." 
-                        className={`w-full border rounded-full py-3 pl-4 pr-12 text-sm outline-none transition-all shadow-inner font-medium ${isDark ? '!bg-slate-950/50 border-slate-800 focus:border-orange-500 text-slate-200' : '!bg-slate-50/80 border-slate-200 focus:border-orange-500 text-slate-900 focus:!bg-white'}`}
-                      />
-                      <button 
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full !bg-transparent hover:!bg-transparent transition-colors ${isDark ? 'text-orange-400' : 'text-orange-500'}`}
-                        onClick={() => setChatMessage("")}
-                        disabled={!chatMessage}
+                    <div className="space-y-2">
+                      <p className="text-sm font-bold text-orange-500">{formatLabel(task?.priority)} priority</p>
+                      <p className="text-sm font-medium text-slate-500">{formatLabel(task?.status)}</p>
+                      <button
+                        type="button"
+                        onClick={handleStartTask}
+                        disabled={isStartingTask || task?.status === 'in_progress'}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-orange-600/20 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        <Send className="w-5 h-5" />
+                        {isStartingTask ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                        {task?.status === 'in_progress' ? 'In Progress' : 'Start Task'}
                       </button>
                     </div>
                   </div>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className={`p-5 rounded-2xl border ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Address</p>
+                      <p className="font-bold flex items-center gap-2"><MapPin className="w-4 h-4 text-orange-500" /> {issue.address || 'No address available'}</p>
+                      <p className="text-xs text-slate-500 mt-2">{issue.zone || 'Unknown zone'} / {issue.ward || 'Unknown ward'}</p>
+                    </div>
+                    <div className={`p-5 rounded-2xl border ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Timeline</p>
+                      <p className="font-bold flex items-center gap-2"><Clock className="w-4 h-4 text-amber-500" /> Due {formatDateTime(task?.due_at)}</p>
+                      <p className="text-xs text-slate-500 mt-2">Assigned {formatDateTime(task?.assigned_at)}</p>
+                      <p className="text-xs text-slate-500 mt-1">Started {formatDateTime(task?.started_at)}</p>
+                    </div>
+                    <div className={`md:col-span-2 p-5 rounded-2xl border ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Description</p>
+                      <p className="text-sm leading-relaxed">{task?.description || issue.description || 'No description available.'}</p>
+                    </div>
+                    <div className={`p-5 rounded-2xl border ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Coordinates</p>
+                      <p className="text-sm">{issue.latitude && issue.longitude ? `${issue.latitude}, ${issue.longitude}` : 'No coordinates available'}</p>
+                    </div>
+                    <div className={`p-5 rounded-2xl border flex items-center justify-between ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Navigation</p>
+                        <p className="text-sm text-slate-500">Open this issue in your maps app.</p>
+                      </div>
+                      <a href={issue.latitude && issue.longitude ? `https://www.google.com/maps?q=${issue.latitude},${issue.longitude}` : undefined} target="_blank" rel="noreferrer" className={`px-4 py-2 rounded-xl text-xs font-bold ${issue.latitude && issue.longitude ? 'bg-blue-600 text-white' : 'bg-slate-300 text-slate-500 pointer-events-none'}`}>
+                        <span className="inline-flex items-center gap-2"><Navigation className="w-4 h-4" /> Navigate</span>
+                      </a>
+                    </div>
+                    <div className={`md:col-span-2 p-5 rounded-2xl border ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Assigned Supervisor</p>
+                      <p className="text-sm font-bold">{task?.supervisor?.full_name || 'Not assigned'}</p>
+                      <p className="text-xs text-slate-500 mt-1">{task?.supervisor?.email || 'No supervisor contact available'}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-            </div>
+                <div className={`border rounded-[2.5rem] p-8 ${isDark ? '!bg-slate-900/80 border-slate-800' : '!bg-white/90 border-slate-200/60 shadow-slate-200/50'}`}>
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-emerald-500" /> Task Actions</h3>
+                  {submitMessage ? (
+                    <div className={`rounded-2xl border px-4 py-3 text-sm mb-4 ${isDark ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+                      {submitMessage}
+                    </div>
+                  ) : null}
+
+                  <form onSubmit={handleProofSubmit} className="space-y-4">
+                    <div className={`p-4 rounded-2xl border ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Submit Proof</label>
+                      <label className={`flex items-center gap-3 px-4 py-4 rounded-2xl border cursor-pointer ${isDark ? 'border-slate-700 bg-slate-900/70' : 'border-slate-200 bg-white'}`}>
+                        <Upload className="w-5 h-5 text-orange-500" />
+                        <span className="text-sm font-medium flex-1">{proofFile ? proofFile.name : 'Choose proof photo or video'}</span>
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          className="hidden"
+                          onChange={(event) => setProofFile(event.target.files?.[0] || null)}
+                        />
+                      </label>
+                      <div className="flex justify-end mt-3">
+                        <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 rounded-xl font-bold text-white bg-orange-600 flex items-center gap-2 disabled:opacity-60">
+                          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          Submit Proof
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+
+                  <form onSubmit={handleResolutionNotesSubmit} className="space-y-4 mt-4">
+                    <div className={`p-4 rounded-2xl border ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Submit Resolution Notes</label>
+                      <textarea
+                        value={resolutionNotes}
+                        onChange={(event) => setResolutionNotes(event.target.value)}
+                        rows={5}
+                        className={`w-full border rounded-[1.5rem] p-4 outline-none ${isDark ? '!bg-slate-900/70 border-slate-700 text-slate-200' : '!bg-white border-slate-200 text-slate-900'}`}
+                        placeholder="Describe the work completed and any on-site notes."
+                      />
+                    </div>
+                    <div className={`p-4 rounded-2xl border text-sm ${isDark ? '!bg-slate-950/50 border-slate-800 text-slate-300' : '!bg-slate-50/80 border-slate-200 text-slate-700'}`}>
+                      Resolution notes: {task?.resolution_notes || 'No resolution notes submitted yet.'}
+                    </div>
+                    {latestProof ? (
+                      <div className={`p-4 rounded-2xl border text-sm ${isDark ? '!bg-slate-950/50 border-slate-800 text-slate-300' : '!bg-slate-50/80 border-slate-200 text-slate-700'}`}>
+                        <div className="flex items-center gap-2 font-bold mb-2"><FileText className="w-4 h-4 text-orange-500" /> Latest Proof</div>
+                        <a href={latestProof.file_url} target="_blank" rel="noreferrer" className="text-blue-500 underline break-all">{latestProof.file_url}</a>
+                        <div className="mt-2 text-xs text-slate-500">Uploaded {formatDateTime(latestProof.uploaded_at)}</div>
+                      </div>
+                    ) : null}
+                    <div className="flex justify-end">
+                      <button type="submit" disabled={isSavingNotes} className="px-6 py-3 rounded-2xl font-bold text-white bg-emerald-600 flex items-center gap-2 disabled:opacity-60">
+                        {isSavingNotes ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                        Submit Resolution Notes
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <div className={`border rounded-[2.5rem] p-8 ${isDark ? '!bg-slate-900/80 border-slate-800' : '!bg-white/90 border-slate-200/60 shadow-slate-200/50'}`}>
+                  <h3 className="text-xl font-bold mb-4">Issue Photos</h3>
+                  {issuePhotos.length ? (
+                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {issuePhotos.map((photoUrl) => (
+                        <a key={photoUrl} href={photoUrl} target="_blank" rel="noreferrer" className={`block rounded-2xl border overflow-hidden ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                          <img src={photoUrl} alt="Issue evidence" className="w-full h-40 object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>No issue photos available.</p>
+                  )}
+                </div>
+
+                <div className={`border rounded-[2.5rem] p-8 ${isDark ? '!bg-slate-900/80 border-slate-800' : '!bg-white/90 border-slate-200/60 shadow-slate-200/50'}`}>
+                  <h3 className="text-xl font-bold mb-4">Task History</h3>
+                  <div className="space-y-3">
+                    {(task?.history || []).map((item, index) => (
+                      <div key={`${item.event_type}-${item.at}-${index}`} className={`p-4 rounded-2xl border ${isDark ? '!bg-slate-950/50 border-slate-800' : '!bg-slate-50/80 border-slate-200'}`}>
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="font-bold text-sm">{item.title}</p>
+                          <p className="text-xs text-slate-500">{formatDateTime(item.at)}</p>
+                        </div>
+                        {item.note ? <p className="text-xs mt-1 text-slate-500">{item.note}</p> : null}
+                      </div>
+                    ))}
+                    {!task?.history?.length ? (
+                      <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>No history available for this task yet.</p>
+                    ) : null}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </main>
       </div>
